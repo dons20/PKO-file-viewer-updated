@@ -1209,7 +1209,6 @@ namespace Mindpower
             if (version == 0)
             {
                 uint old_version = fp.ReadUInt32();
-                int x = 0;
             };
             if (this._base_seq != null)
             {

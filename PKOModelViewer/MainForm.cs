@@ -14,6 +14,7 @@ using Mindpower;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System.IO;
 
 namespace PKOModelViewer
 {
@@ -60,6 +61,32 @@ namespace PKOModelViewer
             int sz = Marshal.SizeOf(typeof(CItemRecord));
 
             InitializeComponent();
+            InitializeButton();
+        }
+
+        private string GetPlayButtonIcon()
+        {
+            string iconName;
+            if (playAnimation && enableAnimation) {
+                iconName = "pause-button-icon.png";
+            } else
+            {
+                iconName = "play-button-icon.png";
+            }
+            string path = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "Resources",
+                iconName);   
+            return path;
+        }
+
+        private void InitializeButton()
+        {
+            string path = GetPlayButtonIcon();
+            PlayPauseButton.Image = new Bitmap(Bitmap.FromFile(path), new Size(40, 40));
+            PlayPauseButton.Text = "";
+            PlayPauseButton.ImageAlign = ContentAlignment.MiddleCenter;
+            PlayPauseButton.TextAlign = ContentAlignment.MiddleCenter;
         }
 
         string CutString(char[] cstr)
@@ -70,7 +97,7 @@ namespace PKOModelViewer
             return new string(cstr, 0, length);
         }
 
-        private void buttonSelectFoler_Click(object sender, EventArgs e)
+        private void SelectFolderButton_Click(object sender, EventArgs e)
         {
             if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -79,7 +106,7 @@ namespace PKOModelViewer
                 System.IO.File.WriteAllText("config.txt", path);
             }
         }
-        private void buttonFindFiles_Click(object sender, EventArgs e)
+        private void LoadContentButton_Click(object sender, EventArgs e)
         {
             labfiles = System.IO.Directory.GetFiles(textBox1.Text, "*.lab", System.IO.SearchOption.AllDirectories);
             lgofiles = System.IO.Directory.GetFiles(textBox1.Text, "*.lgo", System.IO.SearchOption.AllDirectories);
@@ -365,7 +392,7 @@ namespace PKOModelViewer
         {
             trackBar1.Enabled = false;
             numericUpDown1.Enabled = false;
-            button1.Enabled = false;
+            PlayPauseButton.Enabled = false;
             enableAnimation = false;
         }
         void EnableAnimation(int frames)
@@ -381,7 +408,7 @@ namespace PKOModelViewer
             animationTimer = 0;
             trackBar1.Enabled = true;
             numericUpDown1.Enabled = true;
-            button1.Enabled = true;
+            PlayPauseButton.Enabled = true;
             enableAnimation = true;
             pictureBox1.Visible = false;
         }
@@ -598,7 +625,7 @@ namespace PKOModelViewer
 
                     trackBar1.Enabled = false;
                     numericUpDown1.Enabled = false;
-                    button1.Enabled = false;
+                    PlayPauseButton.Enabled = false;
                     enableAnimation = false;
                     pictureBox1.Visible = false;
 
@@ -864,7 +891,7 @@ namespace PKOModelViewer
                     continue;
                 GL.BindTexture(TextureTarget.Texture2D, geom.mtl_seq[j].tex_seq[0].data_pointer);
                 GL.Color3(1f, 1f, 1f);
-                GL.Begin(BeginMode.Triangles);
+                GL.Begin(PrimitiveType.Triangles);
                 for (uint i = geom.mesh.subset_seq[j].start_index; i < geom.mesh.subset_seq[j].start_index + geom.mesh.subset_seq[j].primitive_num * 3; i++)
                 {
                     D3DXVECTOR3 p1 = geom.mesh.vertex_seq[geom.mesh.index_seq[i]];
@@ -890,7 +917,7 @@ namespace PKOModelViewer
             {
                 GL.BindTexture(TextureTarget.Texture2D, geom.mtl_seq[j].tex_seq[0].data_pointer);
                 GL.Color3(1f, 1f, 1f);
-                GL.Begin(BeginMode.Triangles);
+                GL.Begin(PrimitiveType.Triangles);
                 for (uint i = geom.mesh.subset_seq[j].start_index; i < geom.mesh.subset_seq[j].start_index + geom.mesh.subset_seq[j].primitive_num * 3; i++)
                 {
                     uint vertexIndex = geom.mesh.index_seq[i];
@@ -940,7 +967,7 @@ namespace PKOModelViewer
             {
                 GL.BindTexture(TextureTarget.Texture2D, geom.mtl_seq[j].tex_seq[0].data_pointer);
                 GL.Color3(1f, 1f, 1f);
-                GL.Begin(BeginMode.Triangles);
+                GL.Begin(PrimitiveType.Triangles);
                 for (uint i = geom.mesh.subset_seq[j].start_index; i < geom.mesh.subset_seq[j].start_index + geom.mesh.subset_seq[j].primitive_num * 3; i++)
                 {
                     D3DXVECTOR3 p1 = geom.mesh.vertex_seq[geom.mesh.index_seq[i]];
@@ -976,7 +1003,7 @@ namespace PKOModelViewer
             }
 
             GL.Color3(1.0, 1.0, 1.0);
-            GL.Begin(BeginMode.Lines);
+            GL.Begin(PrimitiveType.Lines);
             for (int i = 0; i < bone._header.bone_num; i++)
             {
                 Vector3 parentBonePos = positions[i];
@@ -1142,6 +1169,7 @@ namespace PKOModelViewer
         {
             if (enableAnimation && playAnimation)
             {
+                InitializeButton();
                 animationTimer++;
                 glControl1.Refresh();
                 isValueChangedProgramly = true;
@@ -1151,12 +1179,11 @@ namespace PKOModelViewer
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void PlayPauseButton_Click(object sender, EventArgs e)
         {
             playAnimation = !playAnimation;
 
-            if (playAnimation) button1.Text = "||";
-            else button1.Text = ">";
+            InitializeButton();
         }
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
@@ -1165,7 +1192,7 @@ namespace PKOModelViewer
             if (!isValueChangedProgramly)
             {
                 playAnimation = false;
-                button1.Text = ">";
+                PlayPauseButton.Text = ">";
                 glControl1.Refresh();
             }
         }
@@ -1176,7 +1203,7 @@ namespace PKOModelViewer
             if (!isValueChangedProgramly)
             {
                 playAnimation = false;
-                button1.Text = ">";
+                PlayPauseButton.Text = ">";
                 glControl1.Refresh();
             }
         }
@@ -1325,12 +1352,6 @@ namespace PKOModelViewer
             }
         }
 
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            var form = new SupportForm();
-            form.ShowDialog();
-        }
-
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string message = "You can use this program or it's source codes as you wish, beside used 3rd party libs with own licencies.\n\n" +
@@ -1342,6 +1363,16 @@ namespace PKOModelViewer
                 "Have a good day, pirates";
 
             MessageBox.Show(message, "PKO Model Viewer");
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -585,25 +585,22 @@ namespace PKOModelViewer
             {
                 List<byte> bytes = new List<byte>();
 
-                unsafe
+                if (position != null)
                 {
-                    if (position != null)
-                    {
-                        bytes.AddRange(BitConverter.GetBytes(position.Value.x));
-                        bytes.AddRange(BitConverter.GetBytes(position.Value.y));
-                        bytes.AddRange(BitConverter.GetBytes(position.Value.z));
-                    }
+                    bytes.AddRange(BitConverter.GetBytes(position.Value.x));
+                    bytes.AddRange(BitConverter.GetBytes(position.Value.y));
+                    bytes.AddRange(BitConverter.GetBytes(position.Value.z));
+                }
 
-                    if (texCoord != null)
-                    {
-                        bytes.AddRange(BitConverter.GetBytes(texCoord.Value.x));
-                        bytes.AddRange(BitConverter.GetBytes(texCoord.Value.y));
-                    }
+                if (texCoord != null)
+                {
+                    bytes.AddRange(BitConverter.GetBytes(texCoord.Value.x));
+                    bytes.AddRange(BitConverter.GetBytes(texCoord.Value.y));
+                }
 
-                    if (color != null)
-                    {
-                        bytes.AddRange(BitConverter.GetBytes(unchecked((int)color)));
-                    }
+                if (color != null)
+                {
+                    bytes.AddRange(BitConverter.GetBytes(unchecked((int)color)));
                 }
 
                 int i = bytes.Count;

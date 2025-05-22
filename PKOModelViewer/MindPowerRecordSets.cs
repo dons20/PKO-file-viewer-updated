@@ -915,7 +915,7 @@ namespace Mindpower
     //  scripts/table/ElfSkillInfo
     public class CElfSkillInfo : CRawDataInfo
     {
-        int nIndex;
+        new int nIndex;
         int nTypeID;
     };
     
@@ -950,8 +950,8 @@ namespace Mindpower
             uint infoSize = fp.ReadUInt32();
             int sizeOf = Marshal.SizeOf(typeof(T));
 
-            if ((uint)sizeOf != infoSize)
-                ;//System.Windows.Forms.MessageBox.Show("sizeof struct not equal with sizeof in rawData");
+            //if ((uint)sizeOf != infoSize)
+                //System.Windows.Forms.MessageBox.Show("sizeof struct not equal with sizeof in rawData");
 
             int resCount = (int)filesize / (int)infoSize;
 
