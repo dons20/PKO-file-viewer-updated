@@ -103,9 +103,19 @@ namespace PKOModelViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap play_icon {
+        internal static System.Drawing.Bitmap PauseButton {
             get {
-                object obj = ResourceManager.GetObject("play-icon", resourceCulture);
+                object obj = ResourceManager.GetObject("PauseButton", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PlayButton {
+            get {
+                object obj = ResourceManager.GetObject("PlayButton", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -126,16 +136,6 @@ namespace PKOModelViewer.Properties {
         internal static System.Drawing.Bitmap SearchFolderOpened {
             get {
                 object obj = ResourceManager.GetObject("SearchFolderOpened", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ukraine {
-            get {
-                object obj = ResourceManager.GetObject("ukraine", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

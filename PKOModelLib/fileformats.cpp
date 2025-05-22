@@ -920,9 +920,9 @@ namespace Mindpower
 		 if ((rsa->state == 137)&&(rsa->value0 == 0))
 			transp_flag++;
 	  };
-	  if ((transp_flag == 1)&&(i < 7));
+	  //if ((transp_flag == 1)&&(i < 7));
 		//RSA_VALUE(&(info->rs_set[i]), 137, 0);  //endcrypt
-	  return 0;
+	  //return 0;
   }
 
 	long __cdecl lwLoadMtlTexInfo(struct lwMtlTexInfo **out_buf, unsigned long *out_num, struct _iobuf *fp, unsigned long version) 

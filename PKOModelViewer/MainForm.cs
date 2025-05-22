@@ -15,7 +15,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
-
+using PKOModelViewer.Properties;
 namespace PKOModelViewer
 {
     public partial class MainForm : Form
@@ -42,11 +42,19 @@ namespace PKOModelViewer
         float rotateY = 0;
         float rotateOffcetY = 0;
         float scale = 1;
-        uint animationTimer = 0;
         bool enableAnimation = false;
         bool playAnimation = true;
         bool isValueChangedProgramly = false;
         Point oldMouseDown;
+
+        /**
+         * Animations
+         */
+        private Timer animationTimer;
+        private DateTime animationStartTime;
+        private double playbackSpeed = 1.0; // 1x by default
+        private int frameCount = 100;       // Example: 100 frames
+        private int frameDuration = 50;     // 50 ms per frame (20 FPS)
 
         ExportForm exportForm;
         ImportForm importForm;
@@ -56,34 +64,36 @@ namespace PKOModelViewer
             for (int i = 0; i < textures.Length; i++)
                 textures[i] = -1;
 
-            if (!FreeImageAPI.FreeImage.IsAvailable()) MessageBox.Show("Need FreeImage.dll");
-
+            if (!FreeImageAPI.FreeImage.IsAvailable())
+                MessageBox.Show("Need FreeImage.dll");
             int sz = Marshal.SizeOf(typeof(CItemRecord));
 
             InitializeComponent();
             InitializeButton();
+
+            animationTimer = new Timer
+            {
+                Interval = 15
+            };
+            animationTimer.Tick += AnimationTimer_Tick;
         }
 
-        private string GetPlayButtonIcon()
+        private Bitmap GetPlayButtonIcon()
         {
-            string iconName;
+            Bitmap iconName;
             if (playAnimation && enableAnimation) {
-                iconName = "pause-button-icon.png";
+                iconName = Resources.PauseButton;
             } else
             {
-                iconName = "play-button-icon.png";
-            }
-            string path = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Resources",
-                iconName);   
-            return path;
+                iconName = Resources.PlayButton;
+            } 
+            return iconName;
         }
 
         private void InitializeButton()
         {
-            string path = GetPlayButtonIcon();
-            PlayPauseButton.Image = new Bitmap(Bitmap.FromFile(path), new Size(40, 40));
+            Bitmap icon = GetPlayButtonIcon();
+            PlayPauseButton.Image = new Bitmap(icon, new Size(40, 40));
             PlayPauseButton.Text = "";
             PlayPauseButton.ImageAlign = ContentAlignment.MiddleCenter;
             PlayPauseButton.TextAlign = ContentAlignment.MiddleCenter;
@@ -99,9 +109,10 @@ namespace PKOModelViewer
 
         private void SelectFolderButton_Click(object sender, EventArgs e)
         {
-            if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            folderBrowserDialog1.InputPath = @"C:\";
+            if (folderBrowserDialog1.ShowDialog() == true)
             {
-                string path = folderBrowserDialog1.SelectedPath + "\\";
+                string path = folderBrowserDialog1.ResultPath + "\\";
                 textBox1.Text = path;
                 System.IO.File.WriteAllText("config.txt", path);
             }
@@ -395,8 +406,11 @@ namespace PKOModelViewer
             PlayPauseButton.Enabled = false;
             enableAnimation = false;
         }
-        void EnableAnimation(int frames)
+        void StartAnimation(int frames)
         {
+            animationStartTime = DateTime.Now;
+            animationTimer.Start();
+
             trackBar1.Minimum = 0;
             trackBar1.Maximum = frames;
             trackBar1.Value = 0;
@@ -405,7 +419,6 @@ namespace PKOModelViewer
             numericUpDown1.Maximum = frames;
             numericUpDown1.Value = 0;
 
-            animationTimer = 0;
             trackBar1.Enabled = true;
             numericUpDown1.Enabled = true;
             PlayPauseButton.Enabled = true;
@@ -452,7 +465,7 @@ namespace PKOModelViewer
                         info += "\n dummy " + bone._dummy_seq[i].id + " [" + bone._dummy_seq[i].parent_bone_id + "]";
 
                     richTextBox1.Text = info;
-                    EnableAnimation((int)bone._header.frame_num);
+                    StartAnimation((int)bone._header.frame_num);
                 }
                 #endregion
 
@@ -474,9 +487,9 @@ namespace PKOModelViewer
                     if (geom.anim_data != null)
                     {
                         if (geom.anim_data.anim_bone != null)
-                            EnableAnimation((int)geom.anim_data.anim_bone._header.frame_num);
+                            StartAnimation((int)geom.anim_data.anim_bone._header.frame_num);
                         if(geom.anim_data.anim_mat!=null)
-                            EnableAnimation((int)geom.anim_data.anim_mat._frame_num);
+                            StartAnimation((int)geom.anim_data.anim_mat._frame_num);
                     }
 
                     string info = lgofiles[index] + "\n";
@@ -528,9 +541,9 @@ namespace PKOModelViewer
                         if (geom.anim_data != null)
                         {
                             if (geom.anim_data.anim_bone != null)
-                                EnableAnimation((int)geom.anim_data.anim_bone._header.frame_num);
+                                StartAnimation((int)geom.anim_data.anim_bone._header.frame_num);
                             if (geom.anim_data.anim_mat != null)
-                                EnableAnimation((int)geom.anim_data.anim_mat._frame_num);
+                                StartAnimation((int)geom.anim_data.anim_mat._frame_num);
                         }
 
                         info += "\n\n---model #" + q;
@@ -638,7 +651,7 @@ namespace PKOModelViewer
                             drawObjectType[drawNum] = DrawObjectType.lab;
                             drawNum++;
 
-                            EnableAnimation((int)bone._header.frame_num);
+                            StartAnimation((int)bone._header.frame_num);
                         }
 
                         info += "\nanimation: " + character.sModel.ToString("0000") + ".lab\n";
@@ -689,7 +702,7 @@ namespace PKOModelViewer
                                 {
                                     if (geom.anim_data != null && geom.anim_data.anim_mat != null)
                                     {
-                                        EnableAnimation((int)geom.anim_data.anim_mat._frame_num);
+                                        StartAnimation((int)geom.anim_data.anim_mat._frame_num);
                                     }
                                     LoadTexturesToGeom(ref geom, filenameModel);
                                     drawObject[drawNum] = geom;
@@ -710,7 +723,7 @@ namespace PKOModelViewer
                             drawObjectType[drawNum] = DrawObjectType.lab;
                             drawNum++;
 
-                            EnableAnimation((int)bone._header.frame_num);
+                            StartAnimation((int)bone._header.frame_num);
                         }
 
                         info += "\nanimation: " + character.sModel.ToString("0000") + ".lab\n";
@@ -807,6 +820,21 @@ namespace PKOModelViewer
             }
         }
 
+        private int GetCurrentAnimationFrame(int totalFrames)
+        {
+            if (!enableAnimation || totalFrames <= 0)
+                return 0;
+
+            TimeSpan elapsed = DateTime.Now - animationStartTime;
+            double virtualElapsedMs = elapsed.TotalMilliseconds * playbackSpeed;
+            int frameIndex = (int)(virtualElapsedMs / frameDuration);
+            if (frameIndex >= totalFrames)
+                frameIndex = totalFrames - 1;
+            if (frameIndex < 0)
+                frameIndex = 0;
+            return frameIndex;
+        }
+
         void DrawGrid()
         {
             GL.Enable(EnableCap.LineStipple);
@@ -827,7 +855,7 @@ namespace PKOModelViewer
 
             GL.Disable(EnableCap.PolygonStipple);
         }
-        Matrix4[] GetTransformByFrame(lwAnimDataBone bone, uint frame)
+        Matrix4[] GetTransformByFrame(lwAnimDataBone bone, int frame)
         {
             Matrix4[] finishmatrixes = new Matrix4[bone._header.bone_num];
             for (int i = 0; i < bone._header.bone_num; i++)
@@ -839,7 +867,6 @@ namespace PKOModelViewer
                 {
                     Quaternion quat = new Quaternion(key.quat_seq[frame].x, key.quat_seq[frame].y, key.quat_seq[frame].z, key.quat_seq[frame].w);
                     Vector3 offcet = new Vector3(key.pos_seq[frame].x, key.pos_seq[frame].y, key.pos_seq[frame].z);
-
                     currentMat = Matrix4.CreateFromQuaternion(quat) * Matrix4.CreateTranslation(offcet);
                 }
                 else if (bone._header.key_type == lwBoneKeyInfoType.BONE_KEY_TYPE_MAT43)
@@ -907,7 +934,7 @@ namespace PKOModelViewer
         void DrawGeom(lwGeomObjInfo geom, lwAnimDataBone bone)
         {
             if (geom.mesh.header.bone_index_num > 0 && bone._header.frame_num == 0) { DrawGeom(geom); return; }
-            uint frame = animationTimer % bone._header.frame_num;
+            int frame = GetCurrentAnimationFrame((int)bone._header.frame_num);
             Matrix4[] finishmatrixes = GetTransformByFrame(bone, frame);
             Vector3[] transformed = new Vector3[geom.mesh.header.bone_infl_factor];
 
@@ -931,10 +958,10 @@ namespace PKOModelViewer
                     for (int q = 0; q < geom.mesh.header.bone_infl_factor; q++)
                     {
                         uint boneIndex = geom.mesh.bone_index_seq[blend.index[q]];
-                        Matrix4 invMat = invMat = new Matrix4(bone._invmat_seq[boneIndex].m[0], bone._invmat_seq[boneIndex].m[1], bone._invmat_seq[boneIndex].m[2], bone._invmat_seq[boneIndex].m[3],
-                                         bone._invmat_seq[boneIndex].m[4], bone._invmat_seq[boneIndex].m[5], bone._invmat_seq[boneIndex].m[6], bone._invmat_seq[boneIndex].m[7],
-                                         bone._invmat_seq[boneIndex].m[8], bone._invmat_seq[boneIndex].m[9], bone._invmat_seq[boneIndex].m[10], bone._invmat_seq[boneIndex].m[11],
-                                         bone._invmat_seq[boneIndex].m[12], bone._invmat_seq[boneIndex].m[13], bone._invmat_seq[boneIndex].m[14], bone._invmat_seq[boneIndex].m[15]); ;
+                        Matrix4 invMat = new Matrix4(bone._invmat_seq[boneIndex].m[0], bone._invmat_seq[boneIndex].m[1], bone._invmat_seq[boneIndex].m[2], bone._invmat_seq[boneIndex].m[3],
+                                                     bone._invmat_seq[boneIndex].m[4], bone._invmat_seq[boneIndex].m[5], bone._invmat_seq[boneIndex].m[6], bone._invmat_seq[boneIndex].m[7],
+                                                     bone._invmat_seq[boneIndex].m[8], bone._invmat_seq[boneIndex].m[9], bone._invmat_seq[boneIndex].m[10], bone._invmat_seq[boneIndex].m[11],
+                                                     bone._invmat_seq[boneIndex].m[12], bone._invmat_seq[boneIndex].m[13], bone._invmat_seq[boneIndex].m[14], bone._invmat_seq[boneIndex].m[15]);
 
                         transformed[q] = Vector3.Transform(p1, invMat * finishmatrixes[boneIndex]);
                     }
@@ -952,7 +979,7 @@ namespace PKOModelViewer
         }
         void DrawGeom(lwGeomObjInfo geom ,lwAnimDataMatrix mat,bool usematlocal=false)
         {
-            uint frame = animationTimer % mat._frame_num;
+            int frame = GetCurrentAnimationFrame((int)mat._frame_num);
             lwMatrix43 finishmatrix43 = mat._mat_seq[frame];
             Matrix4 finishmatrix = new Matrix4(finishmatrix43.m[0], finishmatrix43.m[1], finishmatrix43.m[2], 0,
                                                finishmatrix43.m[3], finishmatrix43.m[4], finishmatrix43.m[5], 0,
@@ -986,16 +1013,16 @@ namespace PKOModelViewer
         void DrawBone(lwAnimDataBone bone)
         {
             if (bone._header.frame_num == 0) return;
-            uint frame = animationTimer % bone._header.frame_num;
+            int frame = GetCurrentAnimationFrame((int)bone._header.frame_num);
             Vector3[] positions = new Vector3[bone._header.bone_num];
             Matrix4[] finishmatrixes = GetTransformByFrame(bone, frame);
 
             for (int i = 0; i < bone._header.bone_num; i++)
             {
-                Matrix4 invMat = invMat = new Matrix4(bone._invmat_seq[i].m[0], bone._invmat_seq[i].m[1], bone._invmat_seq[i].m[2], bone._invmat_seq[i].m[3],
-                                         bone._invmat_seq[i].m[4], bone._invmat_seq[i].m[5], bone._invmat_seq[i].m[6], bone._invmat_seq[i].m[7],
-                                         bone._invmat_seq[i].m[8], bone._invmat_seq[i].m[9], bone._invmat_seq[i].m[10], bone._invmat_seq[i].m[11],
-                                         bone._invmat_seq[i].m[12], bone._invmat_seq[i].m[13], bone._invmat_seq[i].m[14], bone._invmat_seq[i].m[15]); ;
+                Matrix4 invMat = new Matrix4(bone._invmat_seq[i].m[0], bone._invmat_seq[i].m[1], bone._invmat_seq[i].m[2], bone._invmat_seq[i].m[3],
+                                             bone._invmat_seq[i].m[4], bone._invmat_seq[i].m[5], bone._invmat_seq[i].m[6], bone._invmat_seq[i].m[7],
+                                             bone._invmat_seq[i].m[8], bone._invmat_seq[i].m[9], bone._invmat_seq[i].m[10], bone._invmat_seq[i].m[11],
+                                             bone._invmat_seq[i].m[12], bone._invmat_seq[i].m[13], bone._invmat_seq[i].m[14], bone._invmat_seq[i].m[15]);
                 Matrix4 startMat = Matrix4.Invert(invMat);
                 Vector3 startPos = new Vector3(startMat.M41, startMat.M42, startMat.M43);
 
@@ -1006,9 +1033,8 @@ namespace PKOModelViewer
             GL.Begin(PrimitiveType.Lines);
             for (int i = 0; i < bone._header.bone_num; i++)
             {
-                Vector3 parentBonePos = positions[i];
                 if (bone._base_seq[i].parent_id == 0xffffffff) continue;
-                parentBonePos = new Vector3(positions[bone._base_seq[i].parent_id]);
+                Vector3 parentBonePos = new Vector3(positions[bone._base_seq[i].parent_id]);
                 Vector3 bonePos = positions[i];
 
                 GL.Vertex3(bonePos);
@@ -1165,16 +1191,25 @@ namespace PKOModelViewer
             glControl1.Refresh();
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private void AnimationTimer_Tick(object sender, EventArgs e)
         {
             if (enableAnimation && playAnimation)
             {
                 InitializeButton();
-                animationTimer++;
+
+                TimeSpan elapsed = DateTime.Now - animationStartTime;
+                double virtualElapsedMs = elapsed.TotalMilliseconds * playbackSpeed;
+                int frameIndex = (int)(virtualElapsedMs / frameDuration);
+
+                if (frameIndex >= frameCount)
+                {
+                    animationTimer.Stop();
+                    frameIndex = frameCount - 1; // Clamp to last frame
+                }
                 glControl1.Refresh();
                 isValueChangedProgramly = true;
-                trackBar1.Value = (int)animationTimer % trackBar1.Maximum;
-                numericUpDown1.Value = (int)animationTimer % numericUpDown1.Maximum;
+                trackBar1.Value = frameIndex % trackBar1.Maximum; // Fixed the incorrect cast
+                numericUpDown1.Value = frameIndex % numericUpDown1.Maximum; // Fixed the incorrect cast
                 isValueChangedProgramly = false;
             }
         }
@@ -1188,7 +1223,11 @@ namespace PKOModelViewer
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
             numericUpDown1.Value = trackBar1.Value;
-            animationTimer = (uint)trackBar1.Value;
+
+            // Set animationStartTime so that the current frame matches the trackBar value
+            int targetFrame = trackBar1.Value;
+            animationStartTime = DateTime.Now - TimeSpan.FromMilliseconds(targetFrame * frameDuration / playbackSpeed);
+
             if (!isValueChangedProgramly)
             {
                 playAnimation = false;
@@ -1196,10 +1235,15 @@ namespace PKOModelViewer
                 glControl1.Refresh();
             }
         }
+
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
             trackBar1.Value = (int)numericUpDown1.Value;
-            animationTimer = (uint)trackBar1.Value;
+
+            // Set animationStartTime so that the current frame matches the numericUpDown value
+            int targetFrame = trackBar1.Value;
+            animationStartTime = DateTime.Now - TimeSpan.FromMilliseconds(targetFrame * frameDuration / playbackSpeed);
+
             if (!isValueChangedProgramly)
             {
                 playAnimation = false;
@@ -1373,6 +1417,18 @@ namespace PKOModelViewer
         private void groupBox1_Enter(object sender, EventArgs e)
         {
 
+        }
+
+        private void PlaybackSpeedButton1X_Click(object sender, EventArgs e)
+        {
+            playbackSpeed = 1.0;
+            //StartAnimation();
+        }
+
+        private void PlaybackSpeedButton2X_Click(object sender, EventArgs e)
+        {
+            playbackSpeed = 2.0;
+            //StartAnimation();
         }
     }
 }
